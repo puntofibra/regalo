@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5">
+<title>Panel de control · Regalo Party</title>
+<meta name="robots" content="noindex,nofollow">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="estilos.css">
+</head>
+<body>
+
+<div class="aurora"><div class="blob"></div></div>
+<div class="grid-fx"></div>
+
+<div class="wrap">
+
+  <!-- ============ LOGIN PIN ============ -->
+  <div id="login">
+    <div class="card hero" id="cardPin">
+      <div class="badge">🔒 Acceso restringido</div>
+      <h1 style="font-size:30px">Panel de control</h1>
+      <p class="sub">Introduce el PIN de administrador</p>
+      <div class="dots" id="dots"></div>
+      <div class="pinpad">
+        <button class="key" onclick="tec('1')">1</button>
+        <button class="key" onclick="tec('2')">2</button>
+        <button class="key" onclick="tec('3')">3</button>
+        <button class="key" onclick="tec('4')">4</button>
+        <button class="key" onclick="tec('5')">5</button>
+        <button class="key" onclick="tec('6')">6</button>
+        <button class="key" onclick="tec('7')">7</button>
+        <button class="key" onclick="tec('8')">8</button>
+        <button class="key" onclick="tec('9')">9</button>
+        <button class="key" onclick="borrar()">⌫</button>
+        <button class="key" onclick="tec('0')">0</button>
+        <button class="key" onclick="entrar()" style="color:var(--p2)">→</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ PANEL ============ -->
+  <div id="panel" class="hide">
+
+    <div class="card hero" style="padding:18px">
+      <div id="adminMenuWrap" style="position:relative;display:inline-block">
+        <button type="button" id="btnAdminMenu" class="badge" style="cursor:pointer;border:none;font:inherit" onclick="toggleAdminMenu()">⚙️ Administración ▾</button>
+        <div id="adminMenuPop" class="hide" style="position:absolute;top:calc(100% + 8px);left:0;z-index:50;background:linear-gradient(170deg,#171029,#0c0818);border:1px solid var(--glass-b);border-radius:14px;padding:8px;min-width:190px;box-shadow:0 12px 30px rgba(0,0,0,.5);text-align:left">
+          <button type="button" class="btn ghost sm" style="width:100%;justify-content:flex-start" onclick="abrirCrearPanel()">➕ Crear panel</button>
+        </div>
+      </div>
+      <h1 style="font-size:26px;margin:12px 0 4px">Panel de control</h1>
+      <p class="sub" style="font-size:13px" id="hola"></p>
+    </div>
+
+    <div class="tabs">
+      <button class="tab on" onclick="tab(0,this)">📊 Resumen</button>
+      <button class="tab" onclick="tab(1,this)">⚙️ Config</button>
+      <button class="tab" onclick="tab(2,this)">👥 Aportes</button>
+    </div>
+
+    <!-- TAB 0 · RESUMEN -->
+    <div id="t0">
+      <div class="card" id="avisoPend" style="display:none;border:1px solid rgba(251,191,36,.5);background:rgba(251,191,36,.08)">
+        <div class="sec-t" style="color:var(--warn)">⚠️ Pagos por verificar</div>
+        <p class="sub full" style="font-size:13px;margin:4px 0 12px">
+          Tienes <b id="avisoPendNum">0</b> aportación(es) pendiente(s) de verificar. Bizum y tarjeta no se confirman de forma automática: revisa que el pago haya llegado y valida cada una para que se publique en el muro.
+        </p>
+        <button class="btn sm" onclick="irAPendientes()">🔍 Revisar pendientes</button>
+      </div>
+      <div class="card">
+        <div class="sec-t">Recaudación</div>
+        <div class="meter-num"><b id="rTotal">0 €</b><span>de <span id="rObj">0 €</span></span></div>
+        <div class="bar"><div class="fill" id="rFill"></div></div>
+        <div class="meter-foot"><span id="rPct">0%</span><span id="rFalta"></span></div>
+        <div class="stats">
+          <div class="stat"><b id="rNum">0</b><small>Aportes</small></div>
+          <div class="stat"><b id="rBiz">0 €</b><small>Bizum</small></div>
+          <div class="stat" id="statTarjeta"><b id="rTar">0 €</b><small>Tarjeta</small></div>
+        </div>
+        <div class="stat" style="margin-top:10px" id="boxPend">
+          <b id="rPend" style="color:var(--warn)">0 €</b><small>Pendiente de validar</small>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="sec-t">Enlaces</div>
+        <label>Web pública (para los invitados)</label>
+        <div class="miniurl" id="urlPub"></div>
+        <button class="btn ghost sm" style="width:100%;margin-top:8px" onclick="copiarUrl()">📋 Copiar enlace público</button>
+        <label>Panel admin (solo tú)</label>
+        <div class="miniurl" id="urlAdm"></div>
+      </div>
+
+      <div class="card">
+        <div class="sec-t">Añadir aportación manual</div>
+        <p class="sub full" style="font-size:12.5px;margin-top:0">Para quien te pague en mano o fuera de la web.</p>
+        <div class="row2">
+          <div><label>Nombre</label><input id="mNom" placeholder="Nombre"></div>
+          <div><label>Importe €</label><input id="mImp" type="number" step="0.5" placeholder="10"></div>
+        </div>
+        <label>Método</label>
+        <select id="mMet"><option value="BIZUM">Bizum</option><option value="TARJETA">Tarjeta</option><option value="EFECTIVO">Efectivo</option></select>
+        <label>Mensaje (opcional)</label>
+        <input id="mMsg" placeholder="Dedicatoria">
+        <button class="btn" style="margin-top:16px" onclick="manual()">➕ Añadir</button>
+      </div>
+    </div>
+
+    <!-- TAB 1 · CONFIG -->
+    <div id="t1" class="hide">
+      <div class="card">
+        <div class="sec-t">🎨 Apariencia</div>
+        <p class="sub full" style="margin:0 0 12px">Elige el estilo visual de la página. Lo verán todos los invitados.</p>
+        <div class="temas" id="temaPicker">
+          <div class="tema-op" data-tema="default" onclick="elegirTema('default')"><div class="tema-sw tema-sw-default"></div><small>✨ Cósmico</small></div>
+          <div class="tema-op" data-tema="fiesta" onclick="elegirTema('fiesta')"><div class="tema-sw tema-sw-fiesta"></div><small>🎉 Fiesta</small></div>
+          <div class="tema-op" data-tema="dorado" onclick="elegirTema('dorado')"><div class="tema-sw tema-sw-dorado"></div><small>🥂 Dorado</small></div>
+          <div class="tema-op" data-tema="tropical" onclick="elegirTema('tropical')"><div class="tema-sw tema-sw-tropical"></div><small>🌴 Tropical</small></div>
+          <div class="tema-op" data-tema="pastel" onclick="elegirTema('pastel')"><div class="tema-sw tema-sw-pastel"></div><small>🍡 Pastel</small></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="sec-t">Textos</div>
+        <label>Título principal</label><input id="c_titulo">
+        <label>Subtítulo</label><input id="c_subtitulo">
+        <label>Nombre del homenajeado</label><input id="c_nombreHomenajeado">
+        <label>Mensaje de agradecimiento</label><input id="c_mensajeGracias">
+      </div>
+
+      <div class="card">
+        <div class="sec-t">Objetivo e importes</div>
+        <div class="row2">
+          <div><label>Objetivo (€)</label><input id="c_objetivo" type="number" step="1"></div>
+          <div><label>Importe mínimo (€)</label><input id="c_importeMinimo" type="number" step="0.5"></div>
+        </div>
+        <label>Fecha límite (opcional)</label><input id="c_fechaLimite" type="date">
+      </div>
+
+      <div class="card">
+        <div class="sec-t">El regalo</div>
+        <label>Nombre del regalo</label><input id="c_regaloNombre">
+        <label>Descripción</label><textarea id="c_regaloDescripcion"></textarea>
+        <label>URL de la foto (Drive o web)</label><input id="c_regaloFoto" placeholder="https://...">
+        <div id="prevFoto"></div>
+        <label>Enlaces del producto (añade los que necesites)</label>
+        <div id="enlacesExtra" style="display:flex;flex-direction:column;gap:8px;margin-top:8px"></div>
+        <button type="button" class="btn ghost sm" id="btnAddEnlace" onclick="agregarEnlaceExtra()" style="margin-top:8px">+ Añadir enlace</button>
+      </div>
+
+      <div class="card">
+        <div class="sec-t">Cobros</div>
+        <label>Número Bizum</label><input id="c_bizumNumero" inputmode="tel">
+        <label>Titular del Bizum</label><input id="c_bizumTitular">
+        <label>Usuario myPOS (tag)</label><input id="c_myposUsuario" placeholder="futurmovil">
+        <div class="miniurl" id="prevPos"></div>
+      </div>
+
+      <div class="card">
+        <div class="sec-t">Avisos</div>
+        <label>Tu email para recibir avisos de aportaciones</label><input type="email" id="c__email" placeholder="tu@email.com">
+      </div>
+
+      <div class="card">
+        <div class="sec-t">Opciones</div>
+        <div class="switch"><span>Campaña activa</span><div class="sw" id="s_activo" onclick="sw(this)"></div></div>
+        <p class="sub full" style="font-size:12.5px;margin:6px 0" id="txtSeguridadPago">🔒 Por seguridad, <b>todas</b> las aportaciones (Bizum y tarjeta) quedan pendientes hasta que las verifiques manualmente aquí: no se pueden confirmar de forma automática.</p>
+        <div class="switch"><span>Mostrar los importes en el muro</span><div class="sw" id="s_mostrarImportes" onclick="sw(this)"></div></div>
+        <div class="switch"><span>Permitir participar como anónimo</span><div class="sw" id="s_permitirAnonimo" onclick="sw(this)"></div></div>
+        <label>Mensaje cuando esté cerrada</label><input id="c_mensajeCerrado">
+      </div>
+
+      <div class="card">
+        <div class="sec-t">Seguridad</div>
+        <label>PIN de administrador (4-8 dígitos)</label>
+        <input id="c_pin" inputmode="numeric" maxlength="8">
+      </div>
+
+      <button class="btn pulse" onclick="guardar()">💾 Guardar configuración</button>
+      <div style="height:20px"></div>
+    </div>
+
+    <!-- TAB 2 · APORTES -->
+    <div id="t2" class="hide">
+      <div class="card">
+        <div class="sec-t">Aportaciones</div>
+        <select id="filtro" onchange="pintarLista()" style="margin-bottom:14px">
+          <option value="">Todas</option>
+          <option value="PENDIENTE">Solo pendientes</option>
+          <option value="CONFIRMADO">Solo confirmadas</option>
+          <option value="RECHAZADO">Rechazadas</option>
+        </select>
+        <div class="muro" id="lista" style="max-height:none"></div>
+      </div>
+    </div>
+
+    <div class="foot">
+      <button class="btn ghost sm" onclick="location.reload()">🔄 Refrescar</button>
+      &nbsp;
+      <button class="btn ghost sm" onclick="salir()">🚪 Salir</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL CREAR PANEL -->
+<div class="modal" id="modalCrearPanel">
+  <div class="sheet" style="position:relative">
+    <button class="x" onclick="cerrarCrearPanel()">✕</button>
+    <div class="sec-t">➕ Crear panel de venta</div>
+    <div id="crearPanelIntro">
+      <p class="sub full" style="font-size:13px">Se creará un panel nuevo y virgen (sin datos), listo para enviar a un cliente. El cliente configurará su nombre, foto, objetivo, Bizum, etc. desde su propio panel con el PIN que le des.</p>
+      <button type="button" class="btn" style="width:100%;margin-top:10px" onclick="confirmarCrearPanel()">Crear panel</button>
+    </div>
+    <div id="crearPanelResultado" class="hide">
+      <label>Web pública (para los invitados)</label>
+      <div class="miniurl" id="cpUrlPub"></div>
+      <button type="button" class="btn ghost sm" style="width:100%;margin-top:6px" onclick="copiarCP('cpUrlPub')">📋 Copiar</button>
+
+      <label style="margin-top:14px;display:block">Panel admin (para el cliente)</label>
+      <div class="miniurl" id="cpUrlAdmin"></div>
+      <button type="button" class="btn ghost sm" style="width:100%;margin-top:6px" onclick="copiarCP('cpUrlAdmin')">📋 Copiar</button>
+
+      <label style="margin-top:14px;display:block">PIN de acceso</label>
+      <div class="miniurl" id="cpPin"></div>
+      <button type="button" class="btn ghost sm" style="width:100%;margin-top:6px" onclick="copiarCP('cpPin')">📋 Copiar</button>
+
+      <label style="margin-top:14px;display:block">Enviar por correo (opcional)</label>
+      <input type="email" id="cpEmail" placeholder="correo@cliente.com" oninput="pintarBtnEnviarCP()">
+      <button type="button" class="btn" id="btnEnviarCP" style="width:100%;margin-top:8px;display:none" onclick="enviarCorreoCP()">✉️ Enviar por correo</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="api.js"></script>
+<script>
+var EVENTO_ID = paramURL('evento');
+
+/* Enlaces basados en DONDE está alojada esta web (GitHub Pages) */
+var WEB_PUB   = new URL('./', location.href).href;
+var WEB_ADMIN = new URL('./admin.html', location.href).href;
+function linkPublico(ev){ return WEB_PUB + (ev ? ('?evento=' + encodeURIComponent(ev)) : ''); }
+function linkAdmin(ev){ return WEB_ADMIN + (ev ? ('?evento=' + encodeURIComponent(ev)) : ''); }
+
+function pintarEnlacesBase(){
+  var elPub = document.getElementById('urlPub'); if (elPub) elPub.textContent = linkPublico(EVENTO_ID);
+  var elAdm = document.getElementById('urlAdm'); if (elAdm) elAdm.textContent = linkAdmin(EVENTO_ID);
+}
+pintarEnlacesBase();
+
+function initAdminMenu(){
+  if (EVENTO_ID) {
+    var b = document.getElementById('btnAdminMenu');
+    if (b) { b.removeAttribute('onclick'); b.style.cursor = 'default'; b.textContent = '⚙️ Administración'; }
+    var pop = document.getElementById('adminMenuPop'); if (pop) pop.remove();
+    var modalCP = document.getElementById('modalCrearPanel'); if (modalCP) modalCP.remove();
+    var pp = document.getElementById('prevPos'); if (pp) pp.style.display = 'none';
+    var txtSeg = document.getElementById('txtSeguridadPago');
+    if (txtSeg) txtSeg.innerHTML = '🔒 Por seguridad, <b>todas</b> las aportaciones por Bizum quedan pendientes hasta que las verifiques manualmente aquí: no se pueden confirmar de forma automática.';
+    var mpEl = document.getElementById('c_myposUsuario');
+    if (mpEl) { mpEl.style.display = 'none'; if (mpEl.previousElementSibling) mpEl.previousElementSibling.style.display = 'none'; }
+    var stEl = document.getElementById('statTarjeta'); if (stEl) stEl.style.display = 'none';
+  } else {
+    document.addEventListener('click', function(e){
+      var wrap = document.getElementById('adminMenuWrap');
+      var pop = document.getElementById('adminMenuPop');
+      if (wrap && pop && !wrap.contains(e.target)) pop.classList.add('hide');
+    });
+  }
+}
+initAdminMenu();
+
+var PIN = '', buf = '', DATA = null;
+var CLAVES = ['titulo','subtitulo','nombreHomenajeado','mensajeGracias','objetivo','importeMinimo',
+              'fechaLimite','regaloNombre','regaloDescripcion','regaloFoto','bizumNumero',
+              'bizumTitular','myposUsuario','mensajeCerrado','pin','_email'];
+var enlacesArr = [];
+var SWITCHES = ['activo','mostrarImportes','permitirAnonimo'];
+var temaSel = 'default';
+function elegirTema(t){
+  temaSel = t;
+  document.querySelectorAll('.tema-op').forEach(function(el){ el.classList.toggle('on', el.dataset.tema===t); });
+}
+
+/* ---------- PIN ---------- */
+function pintaDots(){
+  var d = document.getElementById('dots');
+  d.innerHTML = '';
+  for (var i=0;i<Math.max(buf.length,4);i++)
+    d.innerHTML += '<div class="dot'+(i<buf.length?' on':'')+'"></div>';
+}
+pintaDots();
+function tec(n){ if(buf.length<8){ buf+=n; pintaDots(); } }
+function borrar(){ buf = buf.slice(0,-1); pintaDots(); }
+document.addEventListener('keydown', function(e){
+  if (document.getElementById('login').classList.contains('hide')) return;
+  if (/^[0-9]$/.test(e.key)) tec(e.key);
+  if (e.key === 'Backspace') borrar();
+  if (e.key === 'Enter') entrar();
+});
+
+function entrar(){
+  if (buf.length < 4){ err(); return; }
+  api('login', { pin: buf, evento: EVENTO_ID }).then(function(r){
+    if (!r || !r.ok){ err(); toast((r && r.msg) || 'PIN incorrecto','err'); return; }
+    PIN = buf;
+    document.getElementById('login').classList.add('hide');
+    document.getElementById('panel').classList.remove('hide');
+    cargar();
+  }).catch(function(){ err(); toast('Error de conexión','err'); });
+}
+function err(){
+  var c = document.getElementById('cardPin');
+  c.classList.add('shake'); setTimeout(function(){c.classList.remove('shake');},500);
+  buf=''; pintaDots();
+}
+function salir(){ PIN=''; buf=''; location.reload(); }
+
+/* ---------- CARGA ---------- */
+function cargar(){
+  api('admindatos', { pin: PIN, evento: EVENTO_ID }).then(function(r){
+    if (!r || !r.ok){ toast((r && r.msg) || 'Error','err'); return; }
+    DATA = r;
+    try { pintarTodo(); } catch(e){ console.log('PINTAR_ERROR', e); }
+  }).catch(function(){ toast('Error de carga','err'); });
+}
+
+function pintarTodo(){
+  var c = DATA.cfg, s = DATA.stats;
+  if (EVENTO_ID) {
+    var mp = document.getElementById('c_myposUsuario');
+    if (mp) { mp.style.display='none'; if (mp.previousElementSibling) mp.previousElementSibling.style.display='none'; }
+    var st = document.getElementById('statTarjeta'); if (st) st.style.display='none';
+    var sel = document.getElementById('mMet');
+    if (sel) { for (var i=sel.options.length-1;i>=0;i--){ if (sel.options[i].value==='TARJETA') sel.remove(i); } }
+  }
+  document.getElementById('hola').textContent = (c.nombreHomenajeado ? 'Campaña: '+c.titulo : c.titulo) || '';
+
+  document.getElementById('rTotal').textContent = eur(s.confirmado);
+  document.getElementById('rObj').textContent = eur(c.objetivo);
+  document.getElementById('rPct').textContent = s.porcentaje + '%';
+  document.getElementById('rFalta').textContent = 'Faltan ' + eur(Math.max(0, c.objetivo - s.confirmado));
+  setTimeout(function(){ document.getElementById('rFill').style.width = Math.max(s.porcentaje,2)+'%'; },200);
+  document.getElementById('rNum').textContent = s.num;
+  document.getElementById('rBiz').textContent = eur(s.bizum);
+  document.getElementById('rTar').textContent = eur(s.tarjeta);
+  document.getElementById('rPend').textContent = eur(s.pendiente);
+  document.getElementById('boxPend').style.display = s.pendiente>0 ? 'block':'none';
+  var nPend = DATA.filas.filter(function(a){ return a.estado==='PENDIENTE'; }).length;
+  document.getElementById('avisoPend').style.display = nPend>0 ? 'block' : 'none';
+  document.getElementById('avisoPendNum').textContent = nPend;
+
+  pintarEnlacesBase();
+
+  CLAVES.forEach(function(k){
+    var el = document.getElementById('c_'+k);
+    if (el) el.value = (c[k]!=null ? c[k] : '');
+  });
+
+  /* --- ENLACES DEL PRODUCTO ---
+     Se usa SIEMPRE la lista que devuelve el servidor (regaloEnlacesArr),
+     aunque venga vacía. Antes se hacía un "fallback" a c.regaloEnlace y por
+     eso los enlaces borrados volvían a aparecer al recargar. */
+  enlacesArr = Array.isArray(c.regaloEnlacesArr) ? c.regaloEnlacesArr.slice() : [];
+  pintarEnlaces();
+
+  SWITCHES.forEach(function(k){
+    var el = document.getElementById('s_'+k);
+    if (el) el.classList.toggle('on', String(c[k]||'').toUpperCase()==='SI');
+  });
+  elegirTema(c.tema || 'default');
+
+  prevFoto(); prevPos();
+  pintarLista();
+}
+
+document.getElementById('c_regaloFoto').addEventListener('input', prevFoto);
+document.getElementById('c_myposUsuario').addEventListener('input', prevPos);
+document.getElementById('c_importeMinimo').addEventListener('input', prevPos);
+
+function pintarEnlaces(){
+  var cont = document.getElementById('enlacesExtra');
+  cont.innerHTML = enlacesArr.map(function(url, i){
+    var safe = String(url||'').replace(/"/g,'&quot;');
+    return '<div style="display:flex;gap:8px;align-items:center">'
+      + '<input type="text" class="enlaceInput" placeholder="https://..." style="flex:1" value="'+safe+'">'
+      + '<button type="button" class="btn ghost sm" onclick="quitarEnlaceExtra('+i+')">✕</button>'
+      + '</div>';
+  }).join('');
+  if (!enlacesArr.length) {
+    cont.innerHTML = '<div class="sub full" style="font-size:12.5px;margin:0">Sin enlaces. Pulsa “+ Añadir enlace” para poner dónde se compra el regalo.</div>';
+  }
+}
+function agregarEnlaceExtra(){
+  _leerEnlacesDesdeInputs();
+  enlacesArr.push('');
+  pintarEnlaces();
+  var inputs = document.querySelectorAll('.enlaceInput');
+  if (inputs.length) inputs[inputs.length-1].focus();
+}
+function quitarEnlaceExtra(i){
+  _leerEnlacesDesdeInputs();
+  enlacesArr.splice(i,1);
+  pintarEnlaces();
+}
+function _leerEnlacesDesdeInputs(){
+  var inputs = document.querySelectorAll('.enlaceInput');
+  enlacesArr = Array.prototype.map.call(inputs, function(inp){ return inp.value.trim(); });
+}
+
+function prevFoto(){
+  var u = document.getElementById('c_regaloFoto').value.trim();
+  var m = u.match(/[-\w]{25,}/);
+  if (u.indexOf('drive.google.com')>-1 && m) u = 'https://drive.google.com/thumbnail?id='+m[0]+'&sz=w800';
+  document.getElementById('prevFoto').innerHTML = u ?
+    '<div class="gift" style="margin-top:10px"><img src="'+u+'" onerror="this.style.display=\'none\'"></div>' : '';
+}
+function prevPos(){
+  var u = document.getElementById('c_myposUsuario').value.trim() || 'futurmovil';
+  var i = document.getElementById('c_importeMinimo').value || '10';
+  document.getElementById('prevPos').textContent = 'Tag mínimo → https://mypos.com/@'+u+'/'+i;
+}
+
+/* ---------- TABS ---------- */
+function tab(n,el){
+  [0,1,2].forEach(function(i){ document.getElementById('t'+i).classList.add('hide'); });
+  document.getElementById('t'+n).classList.remove('hide');
+  document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('on');});
+  el.classList.add('on');
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+function sw(el){ el.classList.toggle('on'); }
+function irAPendientes(){
+  tab(2, document.querySelectorAll('.tab')[2]);
+  document.getElementById('filtro').value = 'PENDIENTE';
+  pintarLista();
+}
+
+/* ---------- GUARDAR ---------- */
+function guardar(){
+  var o = {};
+  CLAVES.forEach(function(k){ var e=document.getElementById('c_'+k); if(e) o[k]=e.value.trim(); });
+  _leerEnlacesDesdeInputs();
+  o.regaloEnlaces = JSON.stringify(enlacesArr.filter(function(u){ return u && u.trim(); }));
+  SWITCHES.forEach(function(k){ o[k] = document.getElementById('s_'+k).classList.contains('on') ? 'SI':'NO'; });
+  o.tema = temaSel;
+
+  if (!o.pin || o.pin.length < 4){ toast('El PIN debe tener al menos 4 dígitos','err'); return; }
+  if (!(parseFloat(o.objetivo)>0)){ toast('Objetivo no válido','err'); return; }
+  if (!(parseFloat(o.importeMinimo)>0)){ toast('Importe mínimo no válido','err'); return; }
+
+  api('guardar', { pin: PIN, evento: EVENTO_ID, d: o }).then(function(r){
+    if(!r || !r.ok){ toast((r && r.msg) || 'Error al guardar','err'); return; }
+    toast(r.msg,'ok');
+    PIN = o.pin;
+    cargar();
+  }).catch(function(){ toast('Error al guardar','err'); });
+}
+
+/* ---------- LISTA ---------- */
+function pintarLista(){
+  var f = document.getElementById('filtro').value;
+  var arr = DATA.filas.filter(function(a){ return !f || a.estado===f; });
+  var l = document.getElementById('lista');
+  if (!arr.length){ l.innerHTML = '<div class="vacio">Sin aportaciones</div>'; return; }
+  l.innerHTML = arr.map(function(a){
+    var pill = a.estado==='CONFIRMADO' ? 'ok' : (a.estado==='PENDIENTE' ? 'pend' : '');
+    return '<div class="tag" style="flex-wrap:wrap">'+
+      '<div class="ava" style="background:'+colorDe(a.nombre)+'">'+esc((a.nombre||'?').charAt(0).toUpperCase())+'</div>'+
+      '<div class="info"><b>'+esc(a.nombre)+'</b>'+
+      '<small>'+a.fecha+' · <span class="pill '+a.metodo.toLowerCase()+'">'+esc(a.metodo)+'</span> '+
+      '<span class="pill '+pill+'">'+esc(a.estado)+'</span></small>'+
+      (a.mensaje? '<small style="color:#c7bde6">“'+esc(a.mensaje)+'”</small>':'')+'</div>'+
+      '<div class="imp">'+eur(a.importe)+'</div>'+
+      '<div style="display:flex;gap:7px;width:100%;margin-top:8px">'+
+        (a.estado!=='CONFIRMADO'? '<button class="btn sm" onclick="est(\''+a.id+'\',\'CONFIRMADO\')">✓ Confirmar</button>':'')+
+        (a.estado!=='RECHAZADO'? '<button class="btn ghost sm" onclick="est(\''+a.id+'\',\'RECHAZADO\')">✕ Rechazar</button>':'')+
+        '<button class="btn ghost sm" onclick="borrarAp(\''+a.id+'\')">🗑</button>'+
+      '</div></div>';
+  }).join('');
+}
+function est(id,e){
+  api('estado', { pin: PIN, id: id, estado: e, evento: EVENTO_ID }).then(function(r){
+    toast(r.msg, r.ok?'ok':'err'); if(r.ok) cargar();
+  });
+}
+function borrarAp(id){
+  if(!confirm('¿Eliminar esta aportación definitivamente?')) return;
+  api('eliminar', { pin: PIN, id: id, evento: EVENTO_ID }).then(function(r){
+    toast(r.msg, r.ok?'ok':'err'); if(r.ok) cargar();
+  });
+}
+function manual(){
+  var d = { nombre:document.getElementById('mNom').value.trim(),
+            importe:parseFloat(document.getElementById('mImp').value)||0,
+            metodo:document.getElementById('mMet').value,
+            mensaje:document.getElementById('mMsg').value.trim() };
+  if(!d.nombre){ toast('Pon un nombre','err'); return; }
+  if(!(d.importe>0)){ toast('Importe no válido','err'); return; }
+  api('manual', { pin: PIN, evento: EVENTO_ID, d: d }).then(function(r){
+    toast(r.msg, r.ok?'ok':'err');
+    if(r.ok){ document.getElementById('mNom').value=''; document.getElementById('mImp').value='';
+              document.getElementById('mMsg').value=''; cargar(); }
+  });
+}
+function copiarUrl(){ copiarTexto(linkPublico(EVENTO_ID), 'Enlace copiado ✓'); }
+function copiarTexto(t, msg){
+  if(!t) return;
+  if(navigator.clipboard) navigator.clipboard.writeText(t).then(function(){toast(msg||'Copiado ✓','ok');});
+  else { var i=document.createElement('input');i.value=t;document.body.appendChild(i);i.select();document.execCommand('copy');i.remove();toast(msg||'Copiado ✓','ok'); }
+}
+
+function toggleAdminMenu(){
+  var m = document.getElementById('adminMenuPop');
+  if (m) m.classList.toggle('hide');
+}
+function abrirCrearPanel(){
+  var pop = document.getElementById('adminMenuPop'); if (pop) pop.classList.add('hide');
+  document.getElementById('crearPanelIntro').classList.remove('hide');
+  document.getElementById('crearPanelResultado').classList.add('hide');
+  document.getElementById('cpEmail').value = '';
+  document.getElementById('btnEnviarCP').style.display = 'none';
+  document.getElementById('modalCrearPanel').classList.add('show');
+}
+function cerrarCrearPanel(){ document.getElementById('modalCrearPanel').classList.remove('show'); }
+
+var CP_EVENTO = '';
+function confirmarCrearPanel(){
+  api('crearpanel', { pin: PIN }).then(function(r){
+    if (!r || !r.ok){ toast((r && r.msg) || 'Error al crear el panel','err'); return; }
+    CP_EVENTO = r.evento;
+    document.getElementById('cpUrlPub').textContent   = linkPublico(r.evento);
+    document.getElementById('cpUrlAdmin').textContent = linkAdmin(r.evento);
+    document.getElementById('cpPin').textContent      = r.pin;
+    document.getElementById('crearPanelIntro').classList.add('hide');
+    document.getElementById('crearPanelResultado').classList.remove('hide');
+  }).catch(function(){ toast('Error al crear el panel','err'); });
+}
+function copiarCP(id){ copiarTexto(document.getElementById(id).textContent); }
+function pintarBtnEnviarCP(){
+  var e = document.getElementById('cpEmail').value.trim();
+  document.getElementById('btnEnviarCP').style.display = e ? 'block' : 'none';
+}
+function enviarCorreoCP(){
+  var email = document.getElementById('cpEmail').value.trim();
+  if (!email) return;
+  var btn = document.getElementById('btnEnviarCP'); btn.disabled = true;
+  api('enviarpanel', {
+    pin: PIN, ev2: CP_EVENTO, email: email,
+    linkpub: linkPublico(CP_EVENTO), linkadm: linkAdmin(CP_EVENTO)
+  }).then(function(r){
+    btn.disabled = false;
+    toast(r.ok ? 'Correo enviado ✓' : (r.msg||'Error al enviar'), r.ok?'ok':'err');
+  }).catch(function(){ btn.disabled=false; toast('Error al enviar correo','err'); });
+}
+
+/* ---------- UTILS ---------- */
+function eur(n){ n=Number(n)||0; return (n%1===0?n:n.toFixed(2))+' €'; }
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){
+  return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
+function colorDe(n){ var h=0; n=String(n||'?');
+  for(var i=0;i<n.length;i++) h=n.charCodeAt(i)+((h<<5)-h);
+  return 'linear-gradient(135deg,hsl('+(h%360)+',85%,68%),hsl('+((h%360)+50)+',85%,60%))'; }
+function toast(m,t){ var e=document.getElementById('toast');
+  e.textContent=m; e.className='toast show '+(t||'');
+  clearTimeout(e._t); e._t=setTimeout(function(){e.className='toast';},3200); }
+</script>
+</body>
+</html>

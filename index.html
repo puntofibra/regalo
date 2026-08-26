@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5">
+<title>Regalo Party</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="estilos.css">
+</head>
+<body>
+
+<div class="aurora"><div class="blob"></div></div>
+<div class="grid-fx"></div>
+<canvas id="chispas"></canvas>
+
+<div class="wrap">
+  <div id="cargando" class="load"></div>
+
+  <div id="app" class="hide">
+
+    <!-- HERO -->
+    <div class="card hero">
+      <div class="badge">✨ <span id="bTag">Regalo de cumpleaños</span></div>
+      <h1 id="titulo">—</h1>
+      <p class="sub" id="subtitulo"></p>
+    </div>
+
+    <!-- MEDIDOR -->
+    <div class="card">
+      <div class="sec-t">Objetivo conseguido</div>
+      <div class="meter-num">
+        <b id="total">0 €</b>
+        <span>de <span id="objetivo">0 €</span></span>
+      </div>
+      <div class="bar"><div class="fill" id="fill"></div></div>
+      <div class="meter-foot">
+        <span id="pct">0%</span>
+        <span id="falta"></span>
+      </div>
+      <div id="avisoCerca" class="avisoCerca hide">🎉 <b>¡Estamos a puntito de conseguirlo!</b> Si todavía te apetece sumarte, no te cortes: puedes seguir aportando sin problema. Lo que sobre del objetivo se le entregará en un sobre, como un extra sorpresa. ¡Gracias por hacer esto posible! 💜</div>
+      <div class="stats">
+        <div class="stat"><b id="sPart">0</b><small>Participantes</small></div>
+        <div class="stat"><b id="sMedia">0 €</b><small>Media</small></div>
+        <div class="stat"><b id="sDias">—</b><small>Restante</small></div>
+      </div>
+    </div>
+
+    <!-- REGALO -->
+    <div class="card" id="cardRegalo">
+      <div class="sec-t">El regalo</div>
+      <div class="gift" id="giftBox"></div>
+      <p class="sub full" id="regDesc"></p>
+      <div id="regLinksBox" style="display:flex;flex-direction:column;gap:8px;margin-top:14px"></div>
+    </div>
+
+    <!-- CTA -->
+    <div class="card" style="text-align:center">
+      <div class="sec-t">Participa</div>
+      <p class="sub" style="margin-bottom:16px">Aporta lo que quieras a partir de <b id="minTxt">—</b> y aparece en el muro de participantes.</p>
+      <button class="btn pulse" onclick="abrir()">💜 Quiero aportar</button>
+      <div id="cerrado" class="hide" style="margin-top:12px;color:var(--warn);font-size:14px"></div>
+    </div>
+
+    <!-- MURO -->
+    <div class="card">
+      <div class="sec-t">Muro de participantes</div>
+      <div class="muro" id="muro"></div>
+    </div>
+
+    <!-- PROMO -->
+    <div class="card" id="promoCard" style="text-align:center;cursor:pointer" onclick="abrirPromo()">
+      <div class="sec-t">✨ ¿Organizas tú el próximo?</div>
+      <p class="sub" style="margin-bottom:0">Crea una página como esta para recaudar el regalo de otra persona especial. Pulsa aquí para ver cómo 🎁</p>
+    </div>
+
+    <div class="foot">Hecho con 💜 · <span id="pieNombre"></span></div>
+  </div>
+</div>
+
+<!-- MODAL VER MENSAJE MURO -->
+<div class="modal" id="modalMsg">
+  <div class="sheet" style="position:relative">
+    <button class="x" onclick="cerrarMensajeMuro()">✕</button>
+    <div class="sec-t" id="msgNombre">—</div>
+    <p class="sub full" id="msgFechaImp" style="margin-bottom:14px"></p>
+    <p style="white-space:pre-wrap;line-height:1.5" id="msgTexto"></p>
+  </div>
+</div>
+
+<!-- MODAL PROMO -->
+<div class="modal" id="modalPromo">
+  <div class="sheet" style="position:relative">
+    <button class="x" onclick="cerrarPromo()">✕</button>
+    <div class="sec-t">🎁 Crea tu propia recaudación</div>
+    <div id="promoInfo" style="line-height:1.55">
+      <p>¿Te gustaría organizar algo así para regalar a alguien que quieres? Con tu propio panel de administrador puedes crear tu página, personalizarla con foto, nombre, objetivo y regalo, y compartir el enlace por WhatsApp con los invitados. Cada uno podrá aportar y aparecer en el muro, igual que aquí.</p>
+      <p>El acceso a tu panel tiene un coste único de <b>3€</b> y podrás usarlo durante 30 días antes de tu evento. Si te interesa, contáctanos por WhatsApp o realiza el pago directamente con tarjeta.</p>
+      <a href="https://wa.me/34633200100" target="_blank" rel="noopener" class="btn" style="margin-top:10px;background:linear-gradient(100deg,#25D366,#128C7E 50%,#25D366);box-shadow:0 10px 30px rgba(37,211,102,.4),inset 0 1px 0 rgba(255,255,255,.28);text-decoration:none">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" style="flex-shrink:0"><path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2 22l5.25-1.38c1.45.79 3.08 1.21 4.79 1.21 5.46 0 9.91-4.45 9.91-9.91S17.5 2 12.04 2zm5.8 14.02c-.24.68-1.4 1.3-1.93 1.38-.5.08-1.13.11-1.82-.11-.42-.13-.96-.31-1.65-.61-2.9-1.25-4.79-4.17-4.93-4.36-.14-.19-1.18-1.57-1.18-3 0-1.42.75-2.12 1.02-2.41.27-.29.58-.36.78-.36.19 0 .39 0 .56.01.18.01.42-.07.66.5.24.58.83 2 .9 2.14.07.14.12.31.02.5-.1.19-.15.31-.29.48-.15.17-.31.38-.44.51-.14.14-.29.29-.13.57.17.29.75 1.24 1.62 2.01 1.11.99 2.06 1.3 2.35 1.44.29.14.46.12.63-.06.17-.19.72-.83.91-1.12.19-.29.38-.24.63-.14.26.1 1.63.77 1.91.91.29.14.48.21.55.33.07.12.07.68-.17 1.36z"/></svg>
+        Escríbenos al 633 200 100
+      </a>
+      <a href="https://mypos.com/@futurmovil/3" target="_blank" rel="noopener" class="btn" style="margin-top:10px;text-decoration:none">💳 Pagar 3€ con tarjeta</a>
+      <p style="color:#ff5555;font-weight:600;text-align:center;margin-top:10px;font-size:.92em;line-height:1.4">📌 Importante: en el <u>concepto del pago</u>, escribe tu número de teléfono para que podamos localizarte y activar tu panel cuanto antes.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ============ MODAL APORTAR ============ -->
+<div class="modal" id="modal">
+  <div class="sheet" style="position:relative">
+    <button class="x" onclick="cerrar()">✕</button>
+    <div class="grab"></div>
+
+    <div id="p1">
+      <h3>¿Cuánto quieres aportar?</h3>
+      <p class="sub full" style="font-size:13px">Mínimo <b id="min2"></b>. Puedes poner más si quieres 😉</p>
+      <div class="chips" id="chips"></div>
+      <label>Otro importe (€)</label>
+      <input type="number" id="otro" inputmode="decimal" min="0" step="0.5" placeholder="Escribe tu importe">
+      <button class="btn" style="margin-top:18px" onclick="paso2()">Continuar →</button>
+    </div>
+
+    <div id="p2" class="hide">
+      <h3>Tus datos</h3>
+      <p class="sub full" style="font-size:13px">Aportación de <b id="resumen" style="color:var(--p2)"></b></p>
+      <label>Tu nombre (así aparecerás)</label>
+      <input id="nombre" maxlength="40" placeholder="Ej: María G.">
+      <label>Mensaje o dedicatoria (opcional)</label>
+      <textarea id="mensaje" placeholder="¡Felicidades! 🎉"></textarea>
+      <div class="row2" style="margin-top:18px">
+        <button class="btn ghost" onclick="paso(1)">← Atrás</button>
+        <button class="btn" onclick="paso3()">Elegir pago →</button>
+      </div>
+    </div>
+
+    <div id="p3" class="hide">
+      <h3>¿Cómo quieres pagar?</h3>
+      <p class="sub full" style="font-size:13px">Importe: <b id="resumen2" style="color:var(--p2)"></b></p>
+      <div style="margin-top:16px">
+        <button class="btn bizum" onclick="verBizum()">📱 Pagar por Bizum</button>
+        <div style="height:11px"></div>
+        <button class="btn" id="btnTarjeta" onclick="pagarTarjeta()">💳 Pago por tarjeta</button>
+        <div style="height:11px"></div>
+        <button class="btn ghost" onclick="paso(2)">← Atrás</button>
+      </div>
+    </div>
+
+    <div id="p4" class="hide">
+      <h3>Pago por Bizum</h3>
+      <p class="sub full" style="font-size:13px">Envía <b id="resumen3" style="color:var(--p2)"></b> al número:</p>
+      <div class="copybox">
+        <b id="bizNum">—</b>
+        <button class="btn sm" onclick="copiar()">Copiar</button>
+      </div>
+      <p class="sub full" style="font-size:12.5px">Titular: <b id="bizTit"></b><br>
+      Cuando lo hayas enviado, pulsa el botón para etiquetarte en el muro.</p>
+      <div style="margin-top:12px;padding:10px 12px;border-radius:12px;background:rgba(251,191,36,.1);border:1px solid rgba(251,191,36,.35)">
+        <p class="sub full" style="font-size:12px;margin:0;color:var(--warn)">⚠️ <b>Importante:</b> escribe tu nombre en el <b>concepto</b> del Bizum para que el administrador sepa que el pago es tuyo.</p>
+      </div>
+      <button class="btn" style="margin-top:14px" id="btnBiz" onclick="confirmar('BIZUM')">✅ Ya lo he enviado, etiquétame</button>
+      <div style="height:11px"></div>
+      <button class="btn ghost" onclick="paso(3)">← Atrás</button>
+    </div>
+
+    <div id="p5" class="hide">
+      <h3>Pago por tarjeta</h3>
+      <p class="sub full" style="font-size:13px">Se ha abierto la pasarela de pago segura con el importe de <b id="resumen4" style="color:var(--p2)"></b>.</p>
+      <div class="miniurl" id="urlPos"></div>
+      <div style="margin-top:12px;padding:10px 12px;border-radius:12px;background:rgba(251,191,36,.1);border:1px solid rgba(251,191,36,.35)">
+        <p class="sub full" style="font-size:12px;margin:0;color:var(--warn)">⚠️ <b>Importante:</b> indica tu nombre en el <b>concepto/referencia</b> del pago para que el administrador pueda identificarte.</p>
+      </div>
+      <button class="btn ghost" style="margin-top:12px" onclick="abrirPos()">↗ Volver a abrir el pago</button>
+      <div style="height:11px"></div>
+      <button class="btn" id="btnTar" onclick="confirmar('TARJETA')">✅ Pago realizado, etiquétame</button>
+      <div style="height:11px"></div>
+      <button class="btn ghost" onclick="paso(3)">← Atrás</button>
+    </div>
+
+    <div id="p6" class="hide" style="text-align:center;padding:12px 0">
+      <div id="iconoGracias" style="font-size:64px;animation:latido 1.6s infinite">🎉</div>
+      <h3 id="tituloGracias" style="margin-top:10px">¡Gracias!</h3>
+      <p class="sub full" id="txtGracias"></p>
+      <div id="pillGracias" style="margin-top:10px"></div>
+      <button class="btn" style="margin-top:16px" onclick="cerrar();recargar()">Ver el muro</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="api.js"></script>
+<script>
+/* ================== ESTADO ================== */
+var EVENTO_ID = paramURL('evento');
+var D = null, importe = 0, urlPago = '', enviando = false;
+
+window.addEventListener('load', function(){
+  chispas(); cargar(true);
+  setInterval(function(){ cargar(false); }, 30000);
+  if (EVENTO_ID) { var bt = document.getElementById('btnTarjeta'); if (bt) bt.style.display = 'none'; }
+});
+
+function cargar(primera){
+  api('datos', { evento: EVENTO_ID, force: '0' })
+    .then(function(r){ D = r; pintar(primera); })
+    .catch(function(){ toast('Error cargando datos','err'); });
+}
+function recargar(){
+  api('datos', { evento: EVENTO_ID, force: '1' })
+    .then(function(r){ D = r; pintar(false); })
+    .catch(function(){});
+}
+
+/* ================== PINTAR ================== */
+function pintar(primera){
+  var c = D.cfg;
+  document.body.className = 'tema-' + (c.tema || 'default');
+  document.getElementById('cargando').classList.add('hide');
+  document.getElementById('app').classList.remove('hide');
+
+  document.getElementById('titulo').textContent = c.titulo || 'Regalo de cumpleaños';
+  document.getElementById('subtitulo').textContent = c.subtitulo || '';
+  document.getElementById('bTag').textContent = c.nombreHomenajeado ? ('Para ' + c.nombreHomenajeado) : 'Regalo de cumpleaños';
+  document.getElementById('pieNombre').textContent = c.nombreHomenajeado || '';
+
+  document.getElementById('objetivo').textContent = eur(D.objetivo);
+  document.getElementById('pct').textContent = D.porcentaje + '% completado';
+  var falta = Math.max(0, D.objetivo - D.total);
+  document.getElementById('falta').textContent = falta > 0 ? ('Faltan ' + eur(falta)) : '¡Objetivo conseguido! 🎉';
+  var av = document.getElementById('avisoCerca');
+  if (av) { if (D.porcentaje >= 90) av.classList.remove('hide'); else av.classList.add('hide'); }
+  document.getElementById('minTxt').textContent = eur(c.importeMinimo);
+  document.getElementById('min2').textContent = eur(c.importeMinimo);
+
+  animarNum(document.getElementById('total'), D.total);
+  setTimeout(function(){ document.getElementById('fill').style.width = Math.max(D.porcentaje,2) + '%'; }, 250);
+
+  document.getElementById('sPart').textContent = D.participantes;
+  document.getElementById('sMedia').textContent = D.participantes ? eur(Math.round(D.total/D.participantes*100)/100) : '0 €';
+  document.getElementById('sDias').textContent = diasRestantes(c.fechaLimite);
+
+  /* regalo */
+  var g = document.getElementById('giftBox');
+  g.innerHTML = (c.regaloFoto ? '<img src="'+esc(c.regaloFoto)+'" alt="regalo" onerror="this.parentNode.innerHTML=\'<div class=noimg>🎁</div>\'">' : '<div class="noimg">🎁</div>')
+    + '<div class="cap"><b>'+esc(c.regaloNombre||'El regalo')+'</b></div>';
+  document.getElementById('regDesc').textContent = c.regaloDescripcion || '';
+
+  var regBox = document.getElementById('regLinksBox');
+  regBox.innerHTML = '';
+  var enlacesPub = (c.regaloEnlaces || []).filter(function(u){ return u && String(u).trim(); });
+  enlacesPub.forEach(function(url, i){
+    var a = document.createElement('a');
+    a.className = 'btn ghost';
+    a.target = '_blank'; a.rel = 'noopener';
+    a.href = url;
+    a.textContent = '🔗 Ver el producto' + (i > 0 ? ' ' + (i+1) : '');
+    a.style.marginTop = (i === 0 ? '14px' : '8px');
+    regBox.appendChild(a);
+  });
+
+  /* cerrado */
+  var btnPulse = document.querySelector('.btn.pulse');
+  var cc = document.getElementById('cerrado');
+  if (c.activo !== 'SI'){
+    if (btnPulse) btnPulse.disabled = true;
+    cc.textContent = c.mensajeCerrado || 'Recaudación cerrada';
+    cc.classList.remove('hide');
+  } else {
+    if (btnPulse) btnPulse.disabled = false;
+    cc.classList.add('hide');
+  }
+
+  /* muro */
+  var m = document.getElementById('muro');
+  if (!D.aportaciones.length){
+    m.innerHTML = '<div class="vacio">Aún no hay participantes.<br>¡Sé el primero en aportar! ✨</div>';
+  } else {
+    m.innerHTML = D.aportaciones.map(function(a,i){
+      var col = colorDe(a.nombre);
+      return '<div class="tag" style="animation-delay:'+Math.min(i*40,600)+'ms;cursor:pointer" onclick="verMensajeMuro('+i+')">'+
+        '<div class="ava" style="background:'+col+'">'+esc((a.nombre||'?').charAt(0).toUpperCase())+'</div>'+
+        '<div class="info"><b>'+esc(a.nombre)+' <span class="pill '+(a.metodo||'').toLowerCase()+'">'+esc(a.metodo||'')+'</span></b>'+
+        '<small>'+(a.mensaje? esc(a.mensaje) : a.fecha)+'</small></div>'+
+        (D.cfg.mostrarImportes==='SI' ? '<div class="imp">'+eur(a.importe)+'</div>' : '')+
+      '</div>';
+    }).join('');
+  }
+
+  if (primera && D.porcentaje >= 100) confeti();
+}
+
+/* ================== MODAL / PASOS ================== */
+function abrir(){
+  if (!D || D.cfg.activo !== 'SI') return;
+  importe = D.cfg.importeMinimo;
+  pintarChips();
+  paso(1);
+  document.getElementById('modal').classList.add('show');
+}
+function cerrar(){ document.getElementById('modal').classList.remove('show'); }
+
+function verMensajeMuro(i){
+  var a = D.aportaciones[i];
+  if (!a) return;
+  document.getElementById('msgNombre').textContent = a.nombre || 'Anónimo';
+  document.getElementById('msgFechaImp').textContent = (a.fecha||'') + (D.cfg.mostrarImportes==='SI' ? ' · ' + eur(a.importe) : '');
+  document.getElementById('msgTexto').textContent = a.mensaje || '(sin mensaje)';
+  document.getElementById('msgTexto').scrollTop = 0;
+  document.getElementById('modalMsg').classList.add('show');
+}
+function cerrarMensajeMuro(){ document.getElementById('modalMsg').classList.remove('show'); }
+function abrirPromo(){ document.getElementById('modalPromo').classList.add('show'); }
+function cerrarPromo(){ document.getElementById('modalPromo').classList.remove('show'); }
+
+function paso(n){
+  [1,2,3,4,5,6].forEach(function(i){ document.getElementById('p'+i).classList.add('hide'); });
+  document.getElementById('p'+n).classList.remove('hide');
+}
+
+function pintarChips(){
+  var min = D.cfg.importeMinimo;
+  var opts = [min, min*2, min*3, min*5];
+  var etiq = ['Mínimo','Generoso','Top','Crack'];
+  document.getElementById('chips').innerHTML = opts.map(function(v,i){
+    return '<div class="chip'+(i===0?' on':'')+'" data-v="'+v+'" onclick="selChip(this)">'+eur(v)+'<small>'+etiq[i]+'</small></div>';
+  }).join('');
+  document.getElementById('otro').value = '';
+  importe = min;
+}
+function selChip(el){
+  document.querySelectorAll('.chip').forEach(function(c){c.classList.remove('on');});
+  el.classList.add('on');
+  importe = parseFloat(el.dataset.v);
+  document.getElementById('otro').value = '';
+}
+document.getElementById('otro').addEventListener('input', function(){
+  if (this.value){
+    document.querySelectorAll('.chip').forEach(function(c){c.classList.remove('on');});
+    importe = parseFloat(this.value) || 0;
+  }
+});
+
+function paso2(){
+  var min = D.cfg.importeMinimo;
+  if (!importe || importe < min){ toast('El importe mínimo es ' + eur(min), 'err'); return; }
+  document.getElementById('resumen').textContent = eur(importe);
+  paso(2);
+}
+function paso3(){
+  var n = document.getElementById('nombre').value.trim();
+  if (!n && D.cfg.permitirAnonimo !== 'SI'){ toast('Escribe tu nombre','err'); return; }
+  document.getElementById('resumen2').textContent = eur(importe);
+  paso(3);
+}
+function verBizum(){
+  document.getElementById('resumen3').textContent = eur(importe);
+  document.getElementById('bizNum').textContent = D.cfg.bizumNumero || '—';
+  document.getElementById('bizTit').textContent = D.cfg.bizumTitular || '';
+  paso(4);
+}
+
+/* ---------- myPOS ---------- */
+function tagPos(imp){
+  var v = (Math.round(imp*100)/100);
+  var s = (v % 1 === 0) ? String(v) : v.toFixed(2);
+  return 'https://mypos.com/@' + (D.cfg.myposUsuario || 'futurmovil') + '/' + s;
+}
+function pagarTarjeta(){
+  if (EVENTO_ID) return;
+  urlPago = tagPos(importe);
+  document.getElementById('resumen4').textContent = eur(importe);
+  document.getElementById('urlPos').textContent = 'Se ha abierto la ventana de pago seguro. Si no se abrió automáticamente, pulsa el botón de abajo para abrirla.';
+  paso(5);
+  abrirPos();
+}
+function abrirPos(){ window.open(urlPago, '_blank'); }
+
+/* ---------- CONFIRMAR ---------- */
+function confirmar(metodo){
+  if (enviando) return;
+  enviando = true;
+  var b = document.getElementById(metodo==='BIZUM'?'btnBiz':'btnTar');
+  var txt = b.textContent; b.textContent = 'Enviando…'; b.disabled = true;
+
+  api('aportar', {
+    evento: EVENTO_ID,
+    d: {
+      nombre: document.getElementById('nombre').value,
+      mensaje: document.getElementById('mensaje').value,
+      importe: importe,
+      metodo: metodo,
+      evento: EVENTO_ID
+    }
+  }).then(function(r){
+    enviando = false; b.textContent = txt; b.disabled = false;
+    if (!r || !r.ok){ toast((r && r.msg) || 'Error al registrar','err'); return; }
+    document.getElementById('txtGracias').textContent = r.msg;
+    if (r.estado === 'PENDIENTE') {
+      document.getElementById('iconoGracias').textContent = '⏳';
+      document.getElementById('tituloGracias').textContent = '¡Pago registrado!';
+      document.getElementById('pillGracias').innerHTML = '<span class="pill pend" style="font-size:12px;padding:6px 14px">Pendiente de verificación</span>';
+    } else {
+      document.getElementById('iconoGracias').textContent = '🎉';
+      document.getElementById('tituloGracias').textContent = '¡Gracias!';
+      document.getElementById('pillGracias').innerHTML = '';
+    }
+    paso(6); confeti(); recargar();
+  }).catch(function(){
+    enviando = false; b.textContent = txt; b.disabled = false;
+    toast('Error al registrar','err');
+  });
+}
+
+function copiar(){
+  var t = D.cfg.bizumNumero || '';
+  if (navigator.clipboard) navigator.clipboard.writeText(t).then(function(){toast('Número copiado ✓','ok');});
+  else { var i=document.createElement('input');i.value=t;document.body.appendChild(i);i.select();document.execCommand('copy');i.remove();toast('Número copiado ✓','ok'); }
+}
+
+/* ================== UTILS ================== */
+function eur(n){ n = Number(n)||0; return (n % 1 === 0 ? n : n.toFixed(2)) + ' €'; }
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){
+  return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+function colorDe(n){
+  var h = 0; n = String(n||'?');
+  for (var i=0;i<n.length;i++) h = n.charCodeAt(i) + ((h<<5)-h);
+  return 'linear-gradient(135deg,hsl('+(h%360)+',85%,68%),hsl('+((h%360)+50)+',85%,60%))';
+}
+function animarNum(el,fin){
+  var ini = 0, t0 = null, dur = 1400;
+  function f(t){ if(!t0)t0=t; var p=Math.min((t-t0)/dur,1);
+    var e = 1 - Math.pow(1-p,3);
+    el.textContent = eur(Math.round((ini+(fin-ini)*e)*100)/100);
+    if(p<1) requestAnimationFrame(f); }
+  requestAnimationFrame(f);
+}
+function diasRestantes(f){
+  if(!f) return '∞';
+  var d = new Date(f); if(isNaN(d)) return '∞';
+  var dif = Math.ceil((d - new Date())/86400000);
+  return dif > 0 ? dif + ' días' : 'Finalizado';
+}
+function toast(m,t){
+  var e = document.getElementById('toast');
+  e.textContent = m; e.className = 'toast show ' + (t||'');
+  clearTimeout(e._t); e._t = setTimeout(function(){ e.className='toast'; }, 3400);
+}
+
+/* ================== EFECTOS ================== */
+function chispas(){
+  var c = document.getElementById('chispas'), x = c.getContext('2d'), ps = [];
+  function size(){ c.width = innerWidth; c.height = innerHeight; }
+  size(); addEventListener('resize', size);
+  for (var i=0;i<45;i++) ps.push({x:Math.random()*c.width,y:Math.random()*c.height,
+    r:Math.random()*1.8+.4,v:Math.random()*.35+.08,o:Math.random()*.5+.15,
+    h:[280,190,330][Math.floor(Math.random()*3)]});
+  (function loop(){
+    x.clearRect(0,0,c.width,c.height);
+    ps.forEach(function(p){
+      p.y -= p.v; if (p.y < -5){ p.y = c.height+5; p.x = Math.random()*c.width; }
+      x.beginPath(); x.arc(p.x,p.y,p.r,0,7);
+      x.fillStyle = 'hsla('+p.h+',90%,72%,'+p.o+')';
+      x.shadowBlur = 9; x.shadowColor = 'hsla('+p.h+',90%,70%,.9)';
+      x.fill();
+    });
+    requestAnimationFrame(loop);
+  })();
+}
+function confeti(){
+  var n = 90, cont = document.body;
+  for (var i=0;i<n;i++){
+    (function(i){
+      var d = document.createElement('div');
+      var col = ['#a855f7','#22d3ee','#f472b6','#fbbf24','#22c55e'][i%5];
+      d.style.cssText = 'position:fixed;z-index:200;pointer-events:none;width:9px;height:'+(Math.random()*8+6)+'px;'+
+        'background:'+col+';left:'+(Math.random()*100)+'vw;top:-20px;opacity:.95;border-radius:2px;'+
+        'box-shadow:0 0 10px '+col+';transform:rotate('+(Math.random()*360)+'deg)';
+      cont.appendChild(d);
+      var dur = 2200 + Math.random()*1800;
+      d.animate([{transform:'translateY(0) rotate(0)',opacity:1},
+                 {transform:'translateY(105vh) rotate('+(Math.random()*900-450)+'deg)',opacity:0}],
+                {duration:dur, easing:'cubic-bezier(.25,.6,.4,1)'});
+      setTimeout(function(){ d.remove(); }, dur);
+    })(i);
+  }
+}
+</script>
+</body>
+</html>
