@@ -223,13 +223,37 @@ if ('serviceWorker' in navigator) {
 /* ================== ESTADO ================== */
 var EVENTO_ID = paramURL('evento');
 
-/* ====== APP INSTALADA: recuerda el evento del enlace con el que se instaló ====== */
+/* ====== QUÉ PANEL ABRE LA APP INSTALADA =============================
+   Solo se recuerda el evento con el que se INSTALÓ la app (evento
+   'appinstalled'). Navegar después a otro enlace NO cambia nada: si
+   tienes instalado tu panel principal y abres el enlace de un cliente,
+   tu app sigue abriendo lo tuyo.
+   ==================================================================== */
+var CLAVE_APP = 'regalo_app_evento_v2';   /* la de la app instalada */
+var CLAVE_IOS = 'regalo_ultimo_visto';    /* solo se usa en iPhone (ver abajo) */
+
 (function(){
-  var esApp = (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) ||
-              window.navigator.standalone === true;
+  var esAndroidApp = window.matchMedia && window.matchMedia('(display-mode: standalone)').matches;
+  var esIphoneApp  = window.navigator.standalone === true;
+
+  /* Al instalar, se fija de una vez el panel de esta app */
+  window.addEventListener('appinstalled', function(){
+    try { localStorage.setItem(CLAVE_APP, EVENTO_ID || ''); } catch(e){}
+  });
+
+  /* iPhone no avisa cuando se instala, así que ahí (y solo ahí) usamos
+     como pista el último enlace de evento abierto en el navegador. */
   try {
-    if (EVENTO_ID) localStorage.setItem('regalo_evento', EVENTO_ID);
-    else if (esApp) EVENTO_ID = localStorage.getItem('regalo_evento') || '';
+    if (!esAndroidApp && !esIphoneApp && EVENTO_ID) localStorage.setItem(CLAVE_IOS, EVENTO_ID);
+  } catch(e){}
+
+  if (EVENTO_ID) return;                       /* la URL manda siempre */
+  if (!esAndroidApp && !esIphoneApp) return;    /* en el navegador, nada que recordar */
+
+  try {
+    var guardado = localStorage.getItem(CLAVE_APP);
+    if (guardado !== null) { EVENTO_ID = guardado; return; }   /* '' = panel principal */
+    if (esIphoneApp) EVENTO_ID = localStorage.getItem(CLAVE_IOS) || '';
   } catch(e){}
 })();
 

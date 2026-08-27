@@ -4,7 +4,7 @@
    Sube la VERSION cada vez que cambies index/admin/estilos
    para que los móviles se traigan la versión nueva.
    ========================================================= */
-var VERSION = 'regalo-v2';
+var VERSION = 'regalo-v3';
 var SHELL = [
   './',
   './index.html',
@@ -57,7 +57,8 @@ self.addEventListener('fetch', function(e){
   /* HTML: red primero (así ves los cambios al instante), caché si no hay internet */
   if (req.mode === 'navigate' || (req.headers.get('accept')||'').indexOf('text/html') > -1){
     e.respondWith(
-      fetch(req).then(function(r){
+      /* no-store: evita que GitHub Pages nos sirva un HTML viejo de su caché */
+      fetch(req.url, { cache: 'no-store', credentials: 'same-origin' }).then(function(r){
         var copia = r.clone();
         caches.open(VERSION).then(function(c){ c.put(req, copia); });
         return r;
@@ -71,7 +72,7 @@ self.addEventListener('fetch', function(e){
   /* Resto (css, js, iconos): caché primero y se refresca por detrás */
   e.respondWith(
     caches.match(req).then(function(cached){
-      var red = fetch(req).then(function(r){
+      var red = fetch(new Request(req.url, { cache: 'no-store' })).then(function(r){
         var copia = r.clone();
         caches.open(VERSION).then(function(c){ c.put(req, copia); });
         return r;
