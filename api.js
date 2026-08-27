@@ -48,7 +48,10 @@ function _post(payload){
 function api(accion, params){
   var p = Object.assign({ api: accion }, params || {});
   if (p.d && typeof p.d === 'object') p.d = JSON.stringify(p.d);
-  var esEscritura = ['guardar','aportar','manual'].indexOf(accion) > -1;
+  var esEscritura = ['guardar','aportar','manual','subirfoto','borrarfoto'].indexOf(accion) > -1;
+  /* La foto viaja en base64: no cabe en una URL, asi que siempre por POST */
+  if (accion === 'subirfoto') return _post(p);
+
   if (esEscritura) {
     return _post(p).catch(function(){ return _jsonp(p); });
   }
