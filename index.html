@@ -3,9 +3,28 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5">
-<title>Regalo Party</title>
+<title>Regalo</title>
+<meta name="description" content="El bote común para el regalo: mira cuánto llevamos y aporta tu parte.">
+<meta name="theme-color" content="#0f0a1f">
+<link rel="icon" href="icono.svg" type="image/svg+xml">
+<link rel="alternate icon" href="favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Regalo">
+
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="estilos.css">
+<script>
+/* ====== PWA: registro del service worker (instalable como app) ====== */
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function(){
+    navigator.serviceWorker.register('sw.js').catch(function(){});
+  });
+}
+</script>
 </head>
 <body>
 
@@ -192,6 +211,60 @@
 <script>
 /* ================== ESTADO ================== */
 var EVENTO_ID = paramURL('evento');
+
+/* ====== APP INSTALADA: recuerda el evento del enlace con el que se instaló ====== */
+(function(){
+  var esApp = (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) ||
+              window.navigator.standalone === true;
+  try {
+    if (EVENTO_ID) localStorage.setItem('regalo_evento', EVENTO_ID);
+    else if (esApp) EVENTO_ID = localStorage.getItem('regalo_evento') || '';
+  } catch(e){}
+})();
+
+/* ====== ACCESO OCULTO AL PANEL ======================================
+   5 clicks/toques seguidos sobre el badge ("PARA JORGE") en menos de
+   2 segundos abren admin.html. El panel sigue pidiendo el PIN, esto
+   solo es la puerta: nadie lo encuentra por casualidad.
+   ==================================================================== */
+(function(){
+  var GOLPES  = 5;     /* clicks necesarios */
+  var VENTANA = 2000;  /* milisegundos */
+  var toques  = [];
+
+  function abrirPanel(){
+    location.href = 'admin.html' + (EVENTO_ID ? ('?evento=' + encodeURIComponent(EVENTO_ID)) : '');
+  }
+
+  window.addEventListener('load', function(){
+    var b = document.querySelector('.hero .badge') || document.querySelector('.badge');
+    if (!b) return;
+
+    /* que no se seleccione el texto ni haga zoom al toquetear rápido */
+    b.style.userSelect = 'none';
+    b.style.webkitUserSelect = 'none';
+    b.style.touchAction = 'manipulation';
+    b.style.transition = 'transform .12s ease';
+
+    b.addEventListener('click', function(){
+      var ahora = Date.now();
+      toques.push(ahora);
+      toques = toques.filter(function(t){ return ahora - t < VENTANA; });
+
+      /* a partir del 3er click, un guiño para saber que va contando */
+      if (toques.length >= 3 && toques.length < GOLPES){
+        b.style.transform = 'scale(1.08)';
+        setTimeout(function(){ b.style.transform = 'scale(1)'; }, 120);
+      }
+
+      if (toques.length >= GOLPES){
+        toques = [];
+        b.style.transform = 'scale(1)';
+        abrirPanel();
+      }
+    });
+  });
+})();
 var D = null, importe = 0, urlPago = '', enviando = false;
 
 window.addEventListener('load', function(){

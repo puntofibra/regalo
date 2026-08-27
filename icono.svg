@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1a1030"/>
+      <stop offset="1" stop-color="#0a0716"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.35" r="0.7">
+      <stop offset="0" stop-color="#a855f7" stop-opacity="0.45"/>
+      <stop offset="1" stop-color="#a855f7" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="caja" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#c084fc"/>
+      <stop offset="1" stop-color="#7c3aed"/>
+    </linearGradient>
+    <linearGradient id="tapa" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#e9d5ff"/>
+      <stop offset="1" stop-color="#a855f7"/>
+    </linearGradient>
+    <linearGradient id="cinta" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#67e8f9"/>
+      <stop offset="1" stop-color="#22d3ee"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="108" fill="url(#bg)"/>
+  <rect width="512" height="512" rx="108" fill="url(#glow)"/>
+  <g transform="translate(256,268) scale(1.0) translate(-256,-268)">
+    <!-- cuerpo -->
+    <rect x="112" y="242" width="288" height="182" rx="18" fill="url(#caja)"/>
+    <!-- tapa -->
+    <rect x="92"  y="182" width="328" height="70"  rx="16" fill="url(#tapa)"/>
+    <!-- cinta vertical -->
+    <rect x="230" y="182" width="52" height="242" fill="url(#cinta)"/>
+    <!-- lazo -->
+    <path d="M256 186 C 226 186 176 176 172 142 C 169 116 196 104 216 118 C 236 132 250 158 256 186 Z" fill="url(#cinta)"/>
+    <path d="M256 186 C 286 186 336 176 340 142 C 343 116 316 104 296 118 C 276 132 262 158 256 186 Z" fill="url(#cinta)"/>
+    <circle cx="256" cy="184" r="26" fill="#a5f3fc"/>
+  </g>
+</svg>
