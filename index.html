@@ -124,6 +124,17 @@ if ('serviceWorker' in navigator) {
   </div>
 </div>
 
+<!-- MODAL EVENTO FINALIZADO -->
+<div class="modal" id="modalFin">
+  <div class="sheet" style="position:relative;text-align:center">
+    <button class="x" onclick="cerrarFin()">✕</button>
+    <div style="font-size:56px;line-height:1;margin:10px 0 12px;filter:drop-shadow(0 0 26px rgba(168,85,247,.55))">🎁</div>
+    <h3 style="margin-bottom:8px">Esta recaudación ya ha finalizado</h3>
+    <p class="sub full" id="finTexto" style="margin-bottom:20px"></p>
+    <button class="btn" onclick="verFelicitaciones()">💜 Ver las felicitaciones</button>
+  </div>
+</div>
+
 <!-- ============ MODAL APORTAR ============ -->
 <div class="modal" id="modal">
   <div class="sheet" style="position:relative">
@@ -334,7 +345,12 @@ function pintar(primera){
   /* cerrado */
   var btnPulse = document.querySelector('.btn.pulse');
   var cc = document.getElementById('cerrado');
-  if (c.activo !== 'SI'){
+  if (D.caducado){
+    /* Evento finalizado: la página se queda de recuerdo. El botón sigue
+       ahí, pero al pulsarlo sale el cartel de "ya ha finalizado". */
+    if (btnPulse) btnPulse.disabled = false;
+    cc.classList.add('hide');
+  } else if (c.activo !== 'SI'){
     if (btnPulse) btnPulse.disabled = true;
     cc.textContent = c.mensajeCerrado || 'Recaudación cerrada';
     cc.classList.remove('hide');
@@ -364,13 +380,35 @@ function pintar(primera){
 
 /* ================== MODAL / PASOS ================== */
 function abrir(){
-  if (!D || D.cfg.activo !== 'SI') return;
+  if (!D) return;
+  if (D.caducado){ abrirFin(); return; }
+  if (D.cfg.activo !== 'SI') return;
   importe = D.cfg.importeMinimo;
   pintarChips();
   paso(1);
   document.getElementById('modal').classList.add('show');
 }
 function cerrar(){ document.getElementById('modal').classList.remove('show'); }
+
+/* ============ CARTEL DE EVENTO FINALIZADO ============ */
+function abrirFin(){
+  var n = (D && D.cfg && D.cfg.nombreHomenajeado) ? esc(D.cfg.nombreHomenajeado) : '';
+  document.getElementById('finTexto').innerHTML =
+    'El plazo para aportar' + (n ? (' al regalo de <b>' + n + '</b>') : '') + ' se ha cerrado, ' +
+    'así que ya no se admiten nuevas aportaciones.' +
+    '<br><br>' +
+    'Pero esta página se queda aquí como recuerdo: puedes seguir leyendo todas ' +
+    'las felicitaciones y ver quién puso su granito de arena.' +
+    '<br><br>' +
+    'Gracias por haber formado parte de esto 💜';
+  document.getElementById('modalFin').classList.add('show');
+}
+function cerrarFin(){ document.getElementById('modalFin').classList.remove('show'); }
+function verFelicitaciones(){
+  cerrarFin();
+  var m = document.getElementById('muro');
+  if (m) setTimeout(function(){ m.scrollIntoView({behavior:'smooth', block:'center'}); }, 180);
+}
 
 function verMensajeMuro(i){
   var a = D.aportaciones[i];
@@ -466,6 +504,7 @@ function confirmar(metodo){
     }
   }).then(function(r){
     enviando = false; b.textContent = txt; b.disabled = false;
+    if (r && !r.ok && r.msg === 'CADUCADO'){ cerrar(); abrirFin(); recargar(); return; }
     if (!r || !r.ok){ toast((r && r.msg) || 'Error al registrar','err'); return; }
     document.getElementById('txtGracias').textContent = r.msg;
     if (r.estado === 'PENDIENTE') {

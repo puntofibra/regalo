@@ -4,7 +4,7 @@
    Sube la VERSION cada vez que cambies index/admin/estilos
    para que los móviles se traigan la versión nueva.
    ========================================================= */
-var VERSION = 'regalo-v1';
+var VERSION = 'regalo-v2';
 var SHELL = [
   './',
   './index.html',
