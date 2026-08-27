@@ -17,6 +17,31 @@
 <meta name="robots" content="noindex,nofollow">
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="estilos.css">
+<style>
+/* ====== Subida de la foto del regalo (solo paneles de cliente) ====== */
+#fotoUploader{margin-top:2px}
+.foto-drop{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+  text-align:center;padding:24px 16px;border-radius:16px;cursor:pointer;
+  border:1.5px dashed rgba(255,255,255,.28);
+  background:linear-gradient(160deg,rgba(255,255,255,.07),rgba(255,255,255,.02));
+  transition:border-color .18s ease,background .18s ease,transform .18s ease}
+.foto-drop:hover,.foto-drop.drag{border-color:var(--p2);transform:translateY(-1px);
+  background:linear-gradient(160deg,rgba(255,255,255,.13),rgba(255,255,255,.04))}
+.foto-drop b{font-size:15.5px;letter-spacing:.2px}
+.foto-drop small{font-size:12.5px;color:#c7bde6;opacity:.9}
+.foto-ic{font-size:28px;line-height:1;margin-bottom:4px;filter:drop-shadow(0 6px 14px rgba(0,0,0,.5))}
+.foto-tip{margin-top:10px;font-size:12.5px;line-height:1.5;color:#cfc4ee;text-align:justify;
+  padding:10px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.12);
+  background:rgba(255,255,255,.045)}
+.foto-prog{margin-top:10px;height:6px;border-radius:99px;overflow:hidden;background:rgba(255,255,255,.12)}
+.foto-prog-fill{height:100%;width:0;border-radius:99px;transition:width .3s ease;
+  background:linear-gradient(90deg,var(--p1),var(--p2))}
+.foto-msg{margin-top:8px;font-size:12.5px;color:#c7bde6;min-height:1px}
+.foto-msg.err{color:#fca5a5}
+.foto-msg.ok{color:#86efac}
+.foto-acts{display:flex;gap:8px;margin-top:10px}
+.foto-acts .btn{flex:1}
+</style>
 <script>
 /* ====== PWA: registro del service worker (instalable como app) ====== */
 if ('serviceWorker' in navigator) {
@@ -160,7 +185,24 @@ if ('serviceWorker' in navigator) {
         <div class="sec-t">El regalo</div>
         <label>Nombre del regalo</label><input id="c_regaloNombre">
         <label>Descripción</label><textarea id="c_regaloDescripcion"></textarea>
-        <label>URL de la foto (Drive o web)</label><input id="c_regaloFoto" placeholder="https://...">
+        <label id="lblFotoUrl">URL de la foto (Drive o web)</label><input id="c_regaloFoto" placeholder="https://...">
+
+<div id="fotoUploader" class="hide">
+<label>Foto del regalo</label>
+<input type="file" id="fileFoto" accept="image/*" style="display:none" onchange="fotoElegida(this)">
+<div class="foto-drop" id="fotoDrop" onclick="pedirFoto()">
+<div class="foto-ic">📷</div>
+<b>Subir foto del regalo</b>
+<small>Hazle una foto ahora o elige una de tu galería</small>
+</div>
+<div class="foto-tip">📐 <b>Consejo:</b> usa una foto <b>horizontal</b> (apaisada, más ancha que alta). Es la que mejor queda en la página que verán los invitados. Se guarda sola, no hace falta pulsar “Guardar configuración”.</div>
+<div class="foto-prog hide" id="fotoProg"><div class="foto-prog-fill" id="fotoProgFill"></div></div>
+<div class="foto-msg" id="fotoMsg"></div>
+<div class="foto-acts hide" id="fotoActs">
+<button type="button" class="btn ghost sm" onclick="pedirFoto()">🔄 Cambiar foto</button>
+<button type="button" class="btn ghost sm" onclick="quitarFoto()">🗑 Quitar</button>
+</div>
+</div>
         <div id="prevFoto"></div>
         <label>Enlaces del producto (añade los que necesites)</label>
         <div id="enlacesExtra" style="display:flex;flex-direction:column;gap:8px;margin-top:8px"></div>
@@ -289,6 +331,7 @@ function initAdminMenu(){
   }
 }
 initAdminMenu();
+activarSubidaFoto();
 
 var PIN = '', buf = '', DATA = null;
 var CLAVES = ['titulo','subtitulo','nombreHomenajeado','mensajeGracias','objetivo','importeMinimo',
@@ -390,7 +433,7 @@ function pintarTodo(){
   });
   elegirTema(c.tema || 'default');
 
-  prevFoto(); prevPos();
+  prevFoto(); prevPos(); pintarEstadoFoto();
   pintarLista();
 }
 
@@ -439,6 +482,126 @@ function prevPos(){
   var u = document.getElementById('c_myposUsuario').value.trim() || 'futurmovil';
   var i = document.getElementById('c_importeMinimo').value || '10';
   document.getElementById('prevPos').textContent = 'Tag mínimo → https://mypos.com/@'+u+'/'+i;
+}
+
+/* ---------- FOTO DEL REGALO (se sube a Drive · paneles de cliente) ---------- */
+var FOTO_LADO_MAX = 1600, FOTO_CALIDAD = 0.85, FOTO_SUBIENDO = false;
+
+function activarSubidaFoto(){
+if (!EVENTO_ID) return;                 /* el panel del dueño sigue usando la URL */
+var lbl = document.getElementById('lblFotoUrl');
+var inp = document.getElementById('c_regaloFoto');
+if (lbl) lbl.style.display = 'none';
+if (inp) inp.type = 'hidden';
+var up = document.getElementById('fotoUploader');
+if (up) up.classList.remove('hide');
+var drop = document.getElementById('fotoDrop');
+if (drop){
+['dragenter','dragover'].forEach(function(ev){
+drop.addEventListener(ev, function(e){ e.preventDefault(); drop.classList.add('drag'); });
+});
+['dragleave','drop'].forEach(function(ev){
+drop.addEventListener(ev, function(e){ e.preventDefault(); drop.classList.remove('drag'); });
+});
+drop.addEventListener('drop', function(e){
+var f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+if (f) subirFoto(f);
+});
+}
+pintarEstadoFoto();
+}
+
+function pintarEstadoFoto(){
+if (!EVENTO_ID) return;
+var inp = document.getElementById('c_regaloFoto');
+var hay = !!(inp && inp.value.trim());
+var acts = document.getElementById('fotoActs');
+if (acts) acts.classList.toggle('hide', !hay);
+var drop = document.getElementById('fotoDrop');
+if (drop) drop.style.display = hay ? 'none' : 'flex';
+}
+
+function pedirFoto(){ if (!FOTO_SUBIENDO) document.getElementById('fileFoto').click(); }
+function fotoElegida(inp){ var f = inp.files && inp.files[0]; inp.value = ''; if (f) subirFoto(f); }
+
+function _fotoMsg(txt, tipo){
+var e = document.getElementById('fotoMsg');
+if (e){ e.textContent = txt || ''; e.className = 'foto-msg' + (tipo ? ' ' + tipo : ''); }
+}
+function _fotoProg(p){
+var box = document.getElementById('fotoProg'), fill = document.getElementById('fotoProgFill');
+if (!box || !fill) return;
+if (p === null){ box.classList.add('hide'); fill.style.width = '0'; return; }
+box.classList.remove('hide'); fill.style.width = p + '%';
+}
+
+/* Reduce la foto en el propio móvil: sube rápido y no engorda el Drive */
+function _redimensionar(file){
+return new Promise(function(res, rej){
+function pintar(src, w, h){
+var esc = Math.min(1, FOTO_LADO_MAX / Math.max(w, h));
+var cw = Math.max(1, Math.round(w * esc)), ch = Math.max(1, Math.round(h * esc));
+var cv = document.createElement('canvas'); cv.width = cw; cv.height = ch;
+var ctx = cv.getContext('2d');
+ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, cw, ch);
+ctx.drawImage(src, 0, 0, cw, ch);
+res({ dataUrl: cv.toDataURL('image/jpeg', FOTO_CALIDAD), w: cw, h: ch });
+}
+function porImagen(){
+var fr = new FileReader();
+fr.onerror = function(){ rej(new Error('No se pudo leer la foto')); };
+fr.onload = function(){
+var img = new Image();
+img.onerror = function(){ rej(new Error('El archivo no parece una imagen')); };
+img.onload = function(){ pintar(img, img.naturalWidth, img.naturalHeight); };
+img.src = fr.result;
+};
+fr.readAsDataURL(file);
+}
+if (window.createImageBitmap){
+createImageBitmap(file, { imageOrientation: 'from-image' })
+.then(function(bmp){ pintar(bmp, bmp.width, bmp.height); })
+.catch(function(){ porImagen(); });
+} else porImagen();
+});
+}
+
+function subirFoto(file){
+if (FOTO_SUBIENDO) return;
+if (!file || !/^image\//.test(file.type || '')){ _fotoMsg('Elige un archivo de imagen (JPG o PNG).','err'); return; }
+FOTO_SUBIENDO = true;
+var drop = document.getElementById('fotoDrop'); if (drop) drop.style.display = 'none';
+_fotoMsg('Preparando la foto…'); _fotoProg(20);
+_redimensionar(file).then(function(o){
+_fotoProg(55);
+_fotoMsg(o.h > o.w ? 'Subiendo… (es vertical: una horizontal quedaría mejor)' : 'Subiendo…');
+document.getElementById('prevFoto').innerHTML =
+'<div class="gift" style="margin-top:10px"><img src="' + o.dataUrl + '"></div>';
+return api('subirfoto', { pin: PIN, evento: EVENTO_ID, foto: o.dataUrl, mime: 'image/jpeg' });
+}).then(function(r){
+if (!r || !r.ok) throw new Error((r && r.msg) || 'No se pudo subir la foto');
+document.getElementById('c_regaloFoto').value = r.url;
+_fotoProg(100);
+_fotoMsg('Foto guardada ✓','ok');
+toast('Foto guardada ✓','ok');
+setTimeout(function(){ _fotoProg(null); prevFoto(); pintarEstadoFoto(); }, 450);
+}).catch(function(e){
+_fotoProg(null);
+_fotoMsg((e && e.message) || 'No se pudo subir la foto','err');
+toast('No se pudo subir la foto','err');
+prevFoto(); pintarEstadoFoto();
+}).then(function(){ FOTO_SUBIENDO = false; });
+}
+
+function quitarFoto(){
+if (FOTO_SUBIENDO) return;
+if (!confirm('¿Quitar la foto del regalo?')) return;
+api('borrarfoto', { pin: PIN, evento: EVENTO_ID }).then(function(r){
+if (!r || !r.ok){ toast((r && r.msg) || 'No se pudo quitar la foto','err'); return; }
+document.getElementById('c_regaloFoto').value = '';
+_fotoMsg(''); prevFoto(); pintarEstadoFoto();
+toast('Foto quitada ✓','ok');
+}).catch(function(){ toast('No se pudo quitar la foto','err'); });
 }
 
 /* ---------- TABS ---------- */
